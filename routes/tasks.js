@@ -1,3 +1,0 @@
-/*
-    Here we handle the tasks routes and bs about it
-*/

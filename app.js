@@ -1,6 +1,7 @@
 const express = require('express');
 const env = require('dotenv').config();
 const connection = require('./database/connect');
+const authRoutes = require('./routes/auth');
 /*
     Task manager application
 */
@@ -16,7 +17,8 @@ app.listen(PORT, () => {
 });
 
 //Home page
-app.get('/',(req,res) => { 
-    res.status(200).send({msg:"Hello this is the TaskManager application"});
+app.get('/users',(req,res) => { 
+    res.send('This is the home page');
 });
 
+app.use('/api',authRoutes);
