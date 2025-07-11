@@ -17,8 +17,9 @@ app.listen(PORT, () => {
 });
 
 //Home page
-app.get('/users',(req,res) => { 
-    res.send('This is the home page');
+app.get('/',(req,res)=>{
+    res.send({msg: 'Hello this is the TaskManager application'})
 });
 
+//Using the authentication routes
 app.use('/api',authRoutes);

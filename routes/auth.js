@@ -23,7 +23,7 @@ router.post(
     ],
     (req, res) => {
 
-        //Getting the result of the validation of the fields
+        //Getting the result of the field validation
         let result = validationResult(req);
         if (!result.isEmpty()) {
             return res.status(400).send({ error: result.array() })
@@ -63,9 +63,16 @@ router.get(
         //Checking if the user exists in the database
         const {username, password} = req.body;
         const sqlQuery = 'select * from users where username = ? and password = ?';
-        db.query(sqlQuery,[username,password],(err,result)=>{
+        db.execute(sqlQuery,[username,password],(err,result)=>{
+
+            //Validate if the user exists
+            if(result.length === 0){
+                return res.status(404).send({msg: 'User not found'});
+            }
+
+            //Validate if something weird happened inside the fkn db
             if(err){
-                return res.status(404).send({msg: 'This use dont exists'});
+                return res.status(404).send({msg: 'This user dont exists'});
             }
             res.status(200).send({msg: 'Loggin succesful'});
         });
