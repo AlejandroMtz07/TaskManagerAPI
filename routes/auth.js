@@ -9,7 +9,9 @@ const bodyParser = require('body-parser').json();
 
 
 
-//Register
+/*
+    Register new user
+*/
 router.post(
     '/register',
     bodyParser,
@@ -18,6 +20,8 @@ router.post(
         body('name').notEmpty().withMessage('The name cant be empty'),
         body('lastname').notEmpty().withMessage('The name cant be empty'),,
         body('username').notEmpty().withMessage('The username cant be empty'),
+        body('email').notEmpty().withMessage('The email can\'t be empty'),
+        body('email').isEmail().withMessage('Email not valid'),
         body('password').notEmpty().withMessage('The password cant be empty'),
         body('password').isStrongPassword({ minLength: 1, minUppercase: 2, minSymbols: 1 }).withMessage('The password isnt so strong')
     ],
@@ -30,11 +34,14 @@ router.post(
         }
 
         //Getting the values from the user
-        const { name, lastname, username , password } = req.body;
-        const sqlQuery = 'insert into users (name,lastname,username,password) values (?,?,?,?);';
-        db.query(sqlQuery, [name, lastname, username, password], (err, result) => {
+        const { name, lastname, username, email , password } = req.body;
+        const sqlQuery = 'insert into users (name,lastname,username,email,password) values (?,?,?,?,?);';
+        db.query(sqlQuery, [name, lastname, username, email, password], (err, result) => {
+            if(err.code === 'ER_DUP_ENTRY'){
+                return res.status(500).send('Email already registered ');
+            }
             if (err) {
-                return res.status(500).send('Error registering user' + err);
+                return res.status(500).send('Error registering user ' + err);
             }
             res.status(200).send({ msg: 'User registered' });
         })
@@ -44,26 +51,29 @@ router.post(
 
 
 
-//Loggin
+/*
+    Login registered user
+*/
 router.get(
     '/login',
     bodyParser,
     [
-        body('username').notEmpty().withMessage('The user cant be empty'),
+        body('email').notEmpty().withMessage('The email cant be empty'),
+        body('email').isEmail().withMessage('Email not valid'),
         body('password').notEmpty().withMessage('The password cant be empty')
     ],
     (req, res) => {
         
         //Getting the validation result
-        let result = validationResult(req);
-        if(!result.isEmpty()){
+        let validation = validationResult(req);
+        if(!validation.isEmpty()){
             return res.status(500).send(result.array());
         }
 
         //Checking if the user exists in the database
-        const {username, password} = req.body;
-        const sqlQuery = 'select * from users where username = ? and password = ?';
-        db.execute(sqlQuery,[username,password],(err,result)=>{
+        const {email, password} = req.body;
+        const sqlQuery = 'select * from users where email = ? and password = ?';
+        db.execute(sqlQuery,[email,password],(err,result)=>{
 
             //Validate if the user exists
             if(result.length === 0){
