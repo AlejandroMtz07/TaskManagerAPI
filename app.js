@@ -2,6 +2,7 @@ const express = require('express');
 const env = require('dotenv').config();
 const connection = require('./database/connect');
 const authRoutes = require('./routes/auth');
+const tasksRoutes = require('./routes/tasks')
 /*
     Task manager application
 */
@@ -23,3 +24,4 @@ app.get('/',(req,res)=>{
 
 //Using the authentication routes
 app.use('/api',authRoutes);
+app.use('/api',tasksRoutes);
