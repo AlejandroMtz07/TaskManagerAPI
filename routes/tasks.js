@@ -66,10 +66,38 @@ router.post(
     }
 );
 
-//Update a task (only specifyc fields)
-router.patch('/tasks', (req, res) => {
+//Update a task (all the task)
+router.put(
+    '/tasks/:user_id',
+    bodyParser,
+    [
+        param('user_id').isInt({ min: 1 }).withMessage('The user_id must be a number'),
+        body('taskname').notEmpty().withMessage('The name can\'t be empty'),
+        body('taskcontent').notEmpty().withMessage('The task content can\'t be empty'),
+        body('taskstate').notEmpty().withMessage('The task content can\t be empty'),
+    ],
+    (req, res) => {
+        let validation = validationResult(req);
+        if (!validation.isEmpty()) {
+            return res.status(500).send(validation.array());
+        }
 
-});
+        let { user_id } = req.params;
+        let { taskname, taskcontent, taskstate } = req.body;
+
+        let sqlQuery = 'update tasks set taskname = ?, taskcontent = ?, taskstate = ? where user_id = ?';
+        db.query(
+            sqlQuery,
+            [taskname, taskcontent, taskstate, user_id],
+            (err, sqlResult) => {
+                if(err){
+                    return res.status(500).send({msg: 'Something went wrong'});
+                }
+                res.status(200).send('The task has been updated');
+            }
+        );
+    }
+);
 //Delete a task
 router.delete(
     '/tasks/:task_id',
@@ -96,6 +124,21 @@ router.delete(
     }
 );
 
+function getUserid(username, password) {
+    let query = 'select * from users where username = ? and password = ?';
+    return new Promise(
+        (resolve, reject) => {
+            db.query(
+                query,
+                [username, password],
+                (err, queryResult) => {
+                    if (err) return reject(err);
+                    resolve(queryResult.length ? queryResult[0].id : null);
+                }
+            );
+        }
+    );
+}
 
 module.exports = router;
 
