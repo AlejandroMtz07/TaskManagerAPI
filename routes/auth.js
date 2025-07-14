@@ -3,10 +3,13 @@
 */
 const express = require('express');
 const db = require('../database/connect');
-const { validationResult, param, body } = require('express-validator');
+const { validationResult, body } = require('express-validator');
 const router = express.Router();
 const bodyParser = require('body-parser').json();
 const bcrypt = require('bcrypt');
+
+const jwt = require('jsonwebtoken');
+const cookie = require('cookie-parser');
 
 
 
@@ -27,7 +30,7 @@ router.post(
         body('password').notEmpty().withMessage('The password cant be empty'),
         body('password').isStrongPassword({ minLength: 1, minUppercase: 2, minSymbols: 1 }).withMessage('The password isnt so strong')
     ],
-    (req, res) => {
+    async (req, res) => {
 
         //Getting the result of the field validation
         let result = validationResult(req);
@@ -38,10 +41,10 @@ router.post(
         //Getting the values from the user
         const { name, lastname, username, email, password } = req.body;
 
-        //Hash password
-        const hashedPassword = bcrypt.hashSync(password,10);
-        
+        //Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
 
+        //Registering the new user
         const sqlQuery = 'insert into users (name,lastname,username,email,password) values (?,?,?,?,?);';
         db.query(
             sqlQuery,
@@ -64,10 +67,11 @@ router.post(
 /*
     Login registered user
 */
-router.get(
+router.post(
     '/login',
     bodyParser,
     [
+        //Validate the login fields
         body('email').notEmpty().withMessage('The email cant be empty'),
         body('email').isEmail().withMessage('Email not valid'),
         body('password').notEmpty().withMessage('The password cant be empty')
@@ -88,7 +92,28 @@ router.get(
         db.execute(
             sqlQuery,
             [email],
-            (err, result) => {
+            async (err, result) => {
+
+                //Creating the JWT
+                const token = jwt.sign(
+                    {
+                        user_id: result[0]['id'],
+                        username: result[0]['username']
+                    },
+                    process.env.JWT_SECRET,
+                    {
+                        expiresIn: process.env.JWT_EXPIRES
+                    }
+                );
+                res.cookie(
+                    'token',
+                    token,
+                    {
+                        httpOnly: true,
+                        sameSite: true,
+                        secure: false,                        
+                    }
+                );
 
                 //Validate if the user exists
                 if (result.length === 0) {
@@ -96,9 +121,9 @@ router.get(
                 }
 
                 //Compare the user password 
-                const validateHash = bcrypt.compareSync(password,result[0]['password']);
-                if(!validateHash){
-                    return res.status(500).send({msg: 'Invalid credentials'});
+                const validateHash = await bcrypt.compare(password, result[0]['password']);
+                if (!validateHash) {
+                    return res.status(401).send({ msg: 'Wrong password' });
                 }
                 res.status(200).send({ msg: 'Loggin succesful' });
             }
@@ -106,6 +131,17 @@ router.get(
     }
 );
 
+
+/*
+    Logout
+*/
+router.post(
+    '/logout',
+    (req,res)=>{
+        res.clearCookie('token');
+        res.send({msg: 'Success logout'});
+    }
+)
 
 //Exports
 module.exports = router;

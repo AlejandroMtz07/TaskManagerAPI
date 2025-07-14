@@ -1,13 +1,15 @@
 const express = require('express');
 const env = require('dotenv').config();
 const authRoutes = require('./routes/auth');
-const tasksRoutes = require('./routes/tasks')
+const tasksRoutes = require('./routes/tasks');
+const cookieParser = require('cookie-parser');
 /*
     Task manager application
 */
 
 //Initialize the new application
 const app = express();
+app.use(cookieParser());
 
 
 //Setting the port app
