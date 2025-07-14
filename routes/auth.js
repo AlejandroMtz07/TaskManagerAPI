@@ -6,6 +6,7 @@ const db = require('../database/connect');
 const { validationResult, param, body } = require('express-validator');
 const router = express.Router();
 const bodyParser = require('body-parser').json();
+const bcrypt = require('bcrypt');
 
 
 
@@ -18,8 +19,9 @@ router.post(
     [
         //Validate the input fields
         body('name').notEmpty().withMessage('The name cant be empty'),
-        body('lastname').notEmpty().withMessage('The name cant be empty'),,
+        body('lastname').notEmpty().withMessage('The name cant be empty'), ,
         body('username').notEmpty().withMessage('The username cant be empty'),
+        body('username').isLength({ min: 5, max: 9 }).withMessage('The username lenght must be minimum 5 and maximum 9'),
         body('email').notEmpty().withMessage('The email can\'t be empty'),
         body('email').isEmail().withMessage('Email not valid'),
         body('password').notEmpty().withMessage('The password cant be empty'),
@@ -34,20 +36,28 @@ router.post(
         }
 
         //Getting the values from the user
-        const { name, lastname, username, email , password } = req.body;
+        const { name, lastname, username, email, password } = req.body;
+
+        //Hash password
+        const hashedPassword = bcrypt.hashSync(password,10);
+        
+
         const sqlQuery = 'insert into users (name,lastname,username,email,password) values (?,?,?,?,?);';
-        db.query(sqlQuery, [name, lastname, username, email, password], (err, result) => {
-            if(err.code === 'ER_DUP_ENTRY'){
-                return res.status(500).send('Email already registered ');
+        db.query(
+            sqlQuery,
+            [name, lastname, username, email, hashedPassword],
+            (err, result) => {
+                if (err) {
+                    if (err.code === 'ER_DUP_ENTRY') {
+                        return res.status(500).send({ error: 'Email already registered ' });
+                    }
+                    return res.status(500).send({ error: 'Error registering user' });
+                }
+                res.status(200).send({ msg: 'User registered' });
             }
-            if (err) {
-                return res.status(500).send('Error registering user ' + err);
-            }
-            res.status(200).send({ msg: 'User registered' });
-        })
-
-
-    });
+        )
+    }
+);
 
 
 
@@ -63,29 +73,36 @@ router.get(
         body('password').notEmpty().withMessage('The password cant be empty')
     ],
     (req, res) => {
-        
+
         //Getting the validation result
         let validation = validationResult(req);
-        if(!validation.isEmpty()){
+        if (!validation.isEmpty()) {
             return res.status(500).send(result.array());
         }
 
         //Checking if the user exists in the database
-        const {email, password} = req.body;
-        const sqlQuery = 'select * from users where email = ? and password = ?';
-        db.execute(sqlQuery,[email,password],(err,result)=>{
+        const { email, password } = req.body;
+        const sqlQuery = 'select * from users where email = ?';
 
-            //Validate if the user exists
-            if(result.length === 0){
-                return res.status(404).send({msg: 'User not found'});
-            }
 
-            //Validate if something weird happened inside the fkn db
-            if(err){
-                return res.status(404).send({msg: 'This user dont exists'});
+        db.execute(
+            sqlQuery,
+            [email],
+            (err, result) => {
+
+                //Validate if the user exists
+                if (result.length === 0) {
+                    return res.status(404).send({ msg: 'User not found' });
+                }
+
+                //Compare the user password 
+                const validateHash = bcrypt.compareSync(password,result[0]['password']);
+                if(!validateHash){
+                    return res.status(500).send({msg: 'Invalid credentials'});
+                }
+                res.status(200).send({ msg: 'Loggin succesful' });
             }
-            res.status(200).send({msg: 'Loggin succesful'});
-        });
+        );
     }
 );
 
