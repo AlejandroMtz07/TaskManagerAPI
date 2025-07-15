@@ -106,11 +106,10 @@ router.post(
                     }
                 );
                 res.cookie(
-                    'token',
-                    token,
+                    'token',token,
                     {
                         httpOnly: true,
-                        sameSite: true,
+                        sameSite: 'lax',
                         secure: false,                        
                     }
                 );
