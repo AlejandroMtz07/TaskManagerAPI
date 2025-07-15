@@ -81,7 +81,7 @@ router.post(
         //Getting the validation result
         let validation = validationResult(req);
         if (!validation.isEmpty()) {
-            return res.status(500).send(result.array());
+            return res.status(500).send(validation.array());
         }
 
         //Checking if the user exists in the database

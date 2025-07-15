@@ -16,7 +16,8 @@ function autheticateToken(req, res, next) {
                 return res.status(403).send({msg: 'Invalid token'});
             }
             req.user_id = decoded.user_id;
-            next();
+
+            next(); // Go to the next route
         }
     )
 }
