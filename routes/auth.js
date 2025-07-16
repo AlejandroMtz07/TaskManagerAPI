@@ -94,6 +94,14 @@ router.post(
             [email],
             async (err, result) => {
 
+                //Validate if the query retursn something
+                if (result.length === 0) {
+                    return res.status(404).send({ msg: 'User not found'+result});
+                }
+                //Check if something happened in the database
+                if (err) {
+                    return res.send(505).send({msg:'Something happened'});
+                }
                 //Creating the JWT
                 const token = jwt.sign(
                     {
@@ -105,19 +113,17 @@ router.post(
                         expiresIn: process.env.JWT_EXPIRES
                     }
                 );
+                //Adding in the cookie the JWT
                 res.cookie(
-                    'token',token,
+                    'token', token,
                     {
                         httpOnly: true,
                         sameSite: 'lax',
-                        secure: false,                        
+                        secure: false,
                     }
                 );
 
-                //Validate if the user exists
-                if (result.length === 0) {
-                    return res.status(404).send({ msg: 'User not found' });
-                }
+
 
                 //Compare the user password 
                 const validateHash = await bcrypt.compare(password, result[0]['password']);
@@ -125,6 +131,7 @@ router.post(
                     return res.status(401).send({ msg: 'Wrong password' });
                 }
                 res.status(200).send({ msg: 'Loggin succesful' });
+
             }
         );
     }
@@ -136,9 +143,9 @@ router.post(
 */
 router.post(
     '/logout',
-    (req,res)=>{
+    (req, res) => {
         res.clearCookie('token');
-        res.send({msg: 'Success logout'});
+        res.status(200).send({ msg: 'Success logout' });
     }
 )
 
