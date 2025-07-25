@@ -106,11 +106,11 @@ router.delete(
         if (!result.isEmpty()) {
             return res.status(500).send(result.array());
         }
-        const sqlQuery = 'delete from tasks where id = ?';
+        const sqlQuery = 'delete from tasks where id = ? and user_id = ?';
         const { task_id } = req.params;
         db.query(
             sqlQuery,
-            [task_id],
+            [task_id, req.user_id],
             (err, queryResult) => {
                 if (err) {
                     return res.status(500).send(err);
