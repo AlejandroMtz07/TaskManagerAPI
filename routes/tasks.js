@@ -11,10 +11,11 @@ const bodyParser = require('body-parser').json();
 const { validationResult, param, body } = require('express-validator');
 
 const authenticateToken = require('../middleware/auth');
+const { handleInputErrors } = require('../middleware/validation');
 
 router.use(authenticateToken);
 
-//Read a task
+//Read all the user tasks
 router.get(
     '/tasks/',
     (req, res) => {
@@ -44,11 +45,9 @@ router.post(
         body('taskcontent').notEmpty().withMessage('The task content cant be empty'),
         body('taskstate').notEmpty().withMessage('The task content can\'t be empty'),
     ],
+    handleInputErrors,
     (req, res) => {
-        let result = validationResult(req);
-        if (!result.isEmpty()) {
-            return res.status(500).send(result.array());
-        }
+
         const { taskname, taskcontent, taskstate} = req.body;
         const sqlQuery = 'insert into tasks (taskname,taskcontent,taskstate,user_id) values (?,?,?,?);';
         db.query(
@@ -58,7 +57,7 @@ router.post(
                 if (err) {
                     return res.status(500).send(err);
                 }
-                res.status(200).send('Task added successfully');
+                res.status(200).send({msg:'Task added successfully'});
             }
         );
     }
@@ -74,11 +73,8 @@ router.put(
         body('taskcontent').notEmpty().withMessage('The task content can\'t be empty'),
         body('taskstate').notEmpty().withMessage('The task content can\t be empty'),
     ],
+    handleInputErrors,
     (req, res) => {
-        let validation = validationResult(req);
-        if (!validation.isEmpty()) {
-            return res.status(500).send(validation.array());
-        }
 
         let { taskname, taskcontent, taskstate } = req.body;
 
@@ -101,11 +97,9 @@ router.delete(
     [
         param('task_id').isInt({ min: 1 }).withMessage('The id must be a number')
     ],
+    handleInputErrors,
     (req, res) => {
-        let result = validationResult(req);
-        if (!result.isEmpty()) {
-            return res.status(500).send(result.array());
-        }
+
         const sqlQuery = 'delete from tasks where id = ? and user_id = ?';
         const { task_id } = req.params;
         db.query(

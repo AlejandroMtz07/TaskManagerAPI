@@ -13,7 +13,7 @@ function autheticateToken(req, res, next) {
         secret,
         (err, decoded) => {
             if(err){
-                return res.status(403).send({msg: 'Invalid token'});
+                return res.status(403).send({msg: 'Login to see your tasks'});
             }
             req.user_id = decoded.user_id;
 

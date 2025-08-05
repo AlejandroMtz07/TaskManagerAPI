@@ -10,6 +10,7 @@ const bcrypt = require('bcrypt');
 
 const jwt = require('jsonwebtoken');
 const cookie = require('cookie-parser');
+const { handleInputErrors } = require('../middleware/validation');
 
 
 
@@ -30,13 +31,8 @@ router.post(
         body('password').notEmpty().withMessage('The password cant be empty'),
         body('password').isStrongPassword({ minLength: 1, minUppercase: 2, minSymbols: 1 }).withMessage('The password isnt so strong')
     ],
+    handleInputErrors,
     async (req, res) => {
-
-        //Getting the result of the field validation
-        let result = validationResult(req);
-        if (!result.isEmpty()) {
-            return res.status(400).send({ error: result.array() })
-        }
 
         //Getting the values from the user
         const { name, lastname, username, email, password } = req.body;
@@ -76,19 +72,14 @@ router.post(
         body('email').isEmail().withMessage('Email not valid'),
         body('password').notEmpty().withMessage('The password cant be empty')
     ],
+    handleInputErrors,
     (req, res) => {
-
-        //Getting the validation result
-        let validation = validationResult(req);
-        if (!validation.isEmpty()) {
-            return res.status(500).send(validation.array());
-        }
 
         //Checking if the user exists in the database
         const { email, password } = req.body;
         const sqlQuery = 'select * from users where email = ?';
 
-
+        //Sending to the database the information
         db.execute(
             sqlQuery,
             [email],
@@ -122,8 +113,6 @@ router.post(
                         secure: false,
                     }
                 );
-
-
 
                 //Compare the user password 
                 const validateHash = await bcrypt.compare(password, result[0]['password']);
