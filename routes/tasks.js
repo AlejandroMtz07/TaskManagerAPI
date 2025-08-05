@@ -8,34 +8,20 @@ const express = require('express');
 const db = require('../database/connect');
 const router = express.Router();
 const bodyParser = require('body-parser').json();
-const { validationResult, param, body } = require('express-validator');
+const { validationResult, param, body, query } = require('express-validator');
 
 const authenticateToken = require('../middleware/auth');
 const { handleInputErrors } = require('../middleware/validation');
+const { getAllTasks, addNewTask, updateTask, deleteTask } = require('../handlers/taskHandler');
 
 router.use(authenticateToken);
 
 //Read all the user tasks
 router.get(
     '/tasks/',
-    (req, res) => {
-        let validation = validationResult(req);
-        if (!validation.isEmpty()) {
-            return res.status(500).send(validation.array());
-        }
-        const { user_id } = req.params;
-        let sqlQuery = 'select * from tasks where user_id = ?';
-        db.query(sqlQuery, [req.user_id], (err, result) => {
-            if (err) {
-                return res.status(404).send('Something happened');
-            }
-            if (result.length === 0) {
-                return res.status(404).send({ msg: 'You don\'t have any tasks' });
-            }
-            res.status(200).send(result);
-        });
-
-    });
+    handleInputErrors,
+    getAllTasks
+);
 //Create a new task
 router.post(
     '/tasks/',
@@ -46,21 +32,7 @@ router.post(
         body('taskstate').notEmpty().withMessage('The task content can\'t be empty'),
     ],
     handleInputErrors,
-    (req, res) => {
-
-        const { taskname, taskcontent, taskstate} = req.body;
-        const sqlQuery = 'insert into tasks (taskname,taskcontent,taskstate,user_id) values (?,?,?,?);';
-        db.query(
-            sqlQuery,
-            [taskname, taskcontent, taskstate, req.user_id],
-            (err, queryResult) => {
-                if (err) {
-                    return res.status(500).send(err);
-                }
-                res.status(200).send({msg:'Task added successfully'});
-            }
-        );
-    }
+    addNewTask
 );
 
 //Update a task (all the task)
@@ -74,22 +46,7 @@ router.put(
         body('taskstate').notEmpty().withMessage('The task content can\t be empty'),
     ],
     handleInputErrors,
-    (req, res) => {
-
-        let { taskname, taskcontent, taskstate } = req.body;
-
-        let sqlQuery = 'update tasks set taskname = ?, taskcontent = ?, taskstate = ? where user_id = ?';
-        db.query(
-            sqlQuery,
-            [taskname, taskcontent, taskstate, req.user_id],
-            (err, sqlResult) => {
-                if(err){
-                    return res.status(500).send({msg: 'Something went wrong'});
-                }
-                res.status(200).send('The task has been updated');
-            }
-        );
-    }
+    updateTask
 );
 //Delete a task
 router.delete(
@@ -98,21 +55,7 @@ router.delete(
         param('task_id').isInt({ min: 1 }).withMessage('The id must be a number')
     ],
     handleInputErrors,
-    (req, res) => {
-
-        const sqlQuery = 'delete from tasks where id = ? and user_id = ?';
-        const { task_id } = req.params;
-        db.query(
-            sqlQuery,
-            [task_id, req.user_id],
-            (err, queryResult) => {
-                if (err) {
-                    return res.status(500).send(err);
-                }
-                res.status(200).send({ msg: 'The task has been deleted' });
-            }
-        );
-    }
+    deleteTask
 );
 
 

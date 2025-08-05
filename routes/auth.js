@@ -2,15 +2,11 @@
     Here we make the validation of the user credentials
 */
 const express = require('express');
-const db = require('../database/connect');
-const { validationResult, body } = require('express-validator');
+const { body } = require('express-validator');
 const router = express.Router();
 const bodyParser = require('body-parser').json();
-const bcrypt = require('bcrypt');
-
-const jwt = require('jsonwebtoken');
-const cookie = require('cookie-parser');
 const { handleInputErrors } = require('../middleware/validation');
+const { registerUser, loginUser, logoutUser } = require('../handlers/userHandler');
 
 
 
@@ -32,30 +28,7 @@ router.post(
         body('password').isStrongPassword({ minLength: 1, minUppercase: 2, minSymbols: 1 }).withMessage('The password isnt so strong')
     ],
     handleInputErrors,
-    async (req, res) => {
-
-        //Getting the values from the user
-        const { name, lastname, username, email, password } = req.body;
-
-        //Hash the password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        //Registering the new user
-        const sqlQuery = 'insert into users (name,lastname,username,email,password) values (?,?,?,?,?);';
-        db.query(
-            sqlQuery,
-            [name, lastname, username, email, hashedPassword],
-            (err, result) => {
-                if (err) {
-                    if (err.code === 'ER_DUP_ENTRY') {
-                        return res.status(500).send({ error: 'Email already registered ' });
-                    }
-                    return res.status(500).send({ error: 'Error registering user' });
-                }
-                res.status(200).send({ msg: 'User registered' });
-            }
-        )
-    }
+    registerUser
 );
 
 
@@ -73,57 +46,7 @@ router.post(
         body('password').notEmpty().withMessage('The password cant be empty')
     ],
     handleInputErrors,
-    (req, res) => {
-
-        //Checking if the user exists in the database
-        const { email, password } = req.body;
-        const sqlQuery = 'select * from users where email = ?';
-
-        //Sending to the database the information
-        db.execute(
-            sqlQuery,
-            [email],
-            async (err, result) => {
-
-                //Validate if the query retursn something
-                if (result.length === 0) {
-                    return res.status(404).send({ msg: 'User not found'+result});
-                }
-                //Check if something happened in the database
-                if (err) {
-                    return res.send(505).send({msg:'Something happened'});
-                }
-                //Creating the JWT
-                const token = jwt.sign(
-                    {
-                        user_id: result[0]['id'],
-                        username: result[0]['username']
-                    },
-                    process.env.JWT_SECRET,
-                    {
-                        expiresIn: process.env.JWT_EXPIRES
-                    }
-                );
-                //Adding in the cookie the JWT
-                res.cookie(
-                    'token', token,
-                    {
-                        httpOnly: true,
-                        sameSite: 'lax',
-                        secure: false,
-                    }
-                );
-
-                //Compare the user password 
-                const validateHash = await bcrypt.compare(password, result[0]['password']);
-                if (!validateHash) {
-                    return res.status(401).send({ msg: 'Wrong password' });
-                }
-                res.status(200).send({ msg: 'Loggin succesful' });
-
-            }
-        );
-    }
+    loginUser
 );
 
 
@@ -132,10 +55,7 @@ router.post(
 */
 router.post(
     '/logout',
-    (req, res) => {
-        res.clearCookie('token');
-        res.status(200).send({ msg: 'Success logout' });
-    }
+    logoutUser,
 )
 
 //Exports
