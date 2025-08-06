@@ -1,11 +1,7 @@
-const express = require('express');
 const db = require('../database/connect');
-const bcrypt = require('bcrypt');
-const { get } = require('../routes/tasks');
 
 const getAllTasks = (req, res) => {
 
-    const { user_id } = req.params;
     let sqlQuery = 'select * from tasks where user_id = ?';
     db.query(sqlQuery, [req.user_id], (err, result) => {
         if (err) {
@@ -46,7 +42,7 @@ const updateTask = (req, res) => {
             if (err) {
                 return res.status(500).send({ msg: 'Something went wrong' });
             }
-            res.status(200).send('The task has been updated');
+            res.status(200).send({ msg: 'The task has been updated' });
         }
     );
 }
