@@ -5,10 +5,9 @@
 
 */
 const express = require('express');
-const db = require('../database/connect');
 const router = express.Router();
 const bodyParser = require('body-parser').json();
-const { validationResult, param, body, query } = require('express-validator');
+const {  param, body } = require('express-validator');
 
 const authenticateToken = require('../middleware/auth');
 const { handleInputErrors } = require('../middleware/validation');
