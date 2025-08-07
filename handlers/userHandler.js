@@ -16,9 +16,9 @@ const registerUser = async (req, res) => {
         (err, result) => {
             if (err) {
                 if (err.code === 'ER_DUP_ENTRY') {
-                    return res.status(500).send({ error: 'Email already registered ' });
+                    return res.status(500).send({ msg: 'Email already registered ' });
                 }
-                return res.status(500).send({ error: 'Error registering user' });
+                return res.status(500).send({ msg: 'Error registering user' });
             }
             res.status(200).send({ msg: 'User registered' });
         }
@@ -70,7 +70,7 @@ const loginUser = async (req, res) => {
             if (!validateHash) {
                 return res.status(401).send({ msg: 'Wrong password' });
             }
-            res.status(200).send({ msg: 'Loggin succesful' });
+            res.status(200).send({ msg: 'Login successful' });
 
         }
     );
