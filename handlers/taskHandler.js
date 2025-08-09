@@ -25,7 +25,7 @@ const addNewTask = (req, res) => {
             if (err) {
                 return res.status(500).send(err);
             }
-            res.status(200).send({ msg: 'Task added successfully' });
+            res.status(200).send({ msg: 'Task added successfuly'});
         }
     );
 }
@@ -34,10 +34,10 @@ const updateTask = (req, res) => {
 
     let { taskname, taskcontent, taskstate } = req.body;
 
-    let sqlQuery = 'update tasks set taskname = ?, taskcontent = ?, taskstate = ? where user_id = ?';
+    let sqlQuery = 'update tasks set taskname = ?, taskcontent = ?, taskstate = ? where id =? and user_id = ?';
     db.query(
         sqlQuery,
-        [taskname, taskcontent, taskstate, req.user_id],
+        [ taskname, taskcontent, taskstate, req.params.id , req.user_id],
         (err, sqlResult) => {
             if (err) {
                 return res.status(500).send({ msg: 'Something went wrong' });

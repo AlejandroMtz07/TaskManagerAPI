@@ -26,9 +26,9 @@ router.post(
     '/tasks/',
     bodyParser,
     [
-        body('taskname').notEmpty().withMessage('The task name can\'t be empty'),
-        body('taskcontent').notEmpty().withMessage('The task content cant be empty'),
-        body('taskstate').notEmpty().withMessage('The task content can\'t be empty'),
+        body('taskname').trim().notEmpty().withMessage('The task name can\'t be empty'),
+        body('taskcontent').trim().notEmpty().withMessage('The task content cant be empty'),
+        body('taskstate').trim().notEmpty().withMessage('The task content can\'t be empty'),
     ],
     handleInputErrors,
     addNewTask
@@ -36,10 +36,10 @@ router.post(
 
 //Update a task (all the task)
 router.put(
-    '/tasks/',
+    '/tasks/:id',
     bodyParser,
     [
-        param('user_id').isInt({ min: 1 }).withMessage('The user_id must be a number'),
+        param('id').isInt({ min: 1 }).withMessage('The user_id must be a number'),
         body('taskname').notEmpty().withMessage('The name can\'t be empty'),
         body('taskcontent').notEmpty().withMessage('The task content can\'t be empty'),
         body('taskstate').notEmpty().withMessage('The task content can\t be empty'),
