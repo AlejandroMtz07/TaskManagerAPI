@@ -41,9 +41,9 @@ router.post(
     bodyParser,
     [
         //Validate the login fields
-        body('email').notEmpty().withMessage('The email cant be empty'),
+        body('email').trim().notEmpty().withMessage('The email cant be empty'),
         body('email').isEmail().withMessage('Email not valid'),
-        body('password').notEmpty().withMessage('The password cant be empty')
+        body('password').trim().notEmpty().withMessage('The password cant be empty')
     ],
     handleInputErrors,
     loginUser
