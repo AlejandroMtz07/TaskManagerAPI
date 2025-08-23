@@ -16,11 +16,19 @@ const registerUser = async (req, res) => {
         (err, result) => {
             if (err) {
                 if (err.code === 'ER_DUP_ENTRY') {
-                    return res.status(500).send({ msg: 'Email already registered ' });
+                    const match = err.sqlMessage.match(/for key '(.+)'/);
+                    let field = null;
+                    if (match && match[1]) {
+                        // Obtiene la columna: users.email → email
+                        field = match[1].split('.').pop();
+                    }
+                    return res.status(400).send({
+                        msg: `El ${field.split('_')[0]} ya está registrado`
+                    });
                 }
                 return res.status(500).send({ msg: 'Error registering user' });
             }
-            res.status(200).send({ msg: 'User registered' });
+            res.status(200).send({ msg: 'User registered successfully' });
         }
     )
 }

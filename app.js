@@ -16,9 +16,9 @@ app.use(cookieParser());
 app.use(
     cors(
         {
-            origin: 'http://localhost:5500',
+            origin: 'http://localhost:5173',
             credentials: true
-        }
+        },
     )
 );
 
@@ -31,7 +31,6 @@ app.listen(PORT, () => {
 //Home page
 app.get('/', (req, res) => {
     res.send({ msg: 'Hello this is the TaskManager application' });
-    console.log('user entered');
 });
 
 //Using the authentication routes
